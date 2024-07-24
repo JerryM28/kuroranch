@@ -1,6 +1,6 @@
 ### Fitur
 ```
-•Autu Runing Tutorial Untuk Akun Baru, kalo gaada akun baru pilik y buat skip
+•Autu Runing Tutorial Untuk Akun Baru, kalo gaada akun baru ketik y buat skip
 •Daily Chekin
 •Mining and Feed
 •Auto Upgrade (Optional)
