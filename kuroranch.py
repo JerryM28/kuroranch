@@ -186,20 +186,34 @@ def onboarding_sequence(bearer_token):
     perform_action(mining_url, "Mining and Feeding", mining_and_feeding_payload, bearer_token)
     time.sleep(1)
 
-# Fungsi untuk mengekstrak username dari string
-def extract_username(data_line):
-    # Ambil bagian dari string setelah 'user='
-    user_data = data_line.split('&user=')[1].split('&')[0]
-    
-    # Decode URL-encoded string
-    user_json_str = urllib.parse.unquote(user_data)
-    
-    # Parse JSON
+# Fungsi untuk mengekstrak username dari token
+def extract_username(token):
+    parsed_token = urllib.parse.unquote(token)
+    start_index = parsed_token.find('user=')
+    if (start_index == -1):
+        print(Fore.RED + "Token tidak mengandung 'user='.")
+        return "Unknown"
+
+    end_index = parsed_token.find('&', start_index)
+    if (end_index == -1):
+        end_index = len(parsed_token)
+
+    user_info = parsed_token[start_index + 5:end_index]
+
     try:
-        user_info = json.loads(user_json_str)
-        return user_info.get('username', 'Unknown')
+        user_json = json.loads(user_info)
+        username = user_json.get('username', 'Unknown')
+        return username
     except json.JSONDecodeError:
-        return 'Invalid JSON'
+        # Coba untuk mengambil first_name jika JSON parsing gagal
+        try:
+            user_info = user_info.replace('%20', ' ')
+            first_name_start = user_info.find('"first_name":"') + len('"first_name":"')
+            first_name_end = user_info.find('"', first_name_start)
+            first_name = user_info[first_name_start:first_name_end]
+            return first_name
+        except Exception:
+            return 'Invalid JSON'
 
 # Fungsi untuk mencetak pesan selamat datang
 def print_welcome_message():
@@ -219,7 +233,7 @@ def process_accounts(user_choice, skip_tutorial):
     for i, bearer_token in enumerate(bearer_tokens, start=1):
         # Ekstrak dan tampilkan username
         username = extract_username(bearer_token)
-        print(Fore.CYAN + Style.BRIGHT + f"\nAKUN {i} - Username: {username}")
+        print(Fore.CYAN + f"👤 Memproses Akun {i} : {username}")
         
         if not skip_tutorial:
             onboarding_sequence(bearer_token)  # Pindah onboarding_sequence ke sini
@@ -237,12 +251,12 @@ def process_accounts(user_choice, skip_tutorial):
         else:
             print(Fore.YELLOW + "Melewatkan proses upgrade untuk akun ini.")
         
-        print(Fore.CYAN + Style.BRIGHT + f"\nAKUN {i} DONE")
+        print(Fore.CYAN + Style.BRIGHT + f"\nAKUN {i} | {username} :" + Fore.GREEN + "DONE")
         time.sleep(5)
     
     print(Fore.RED + Style.BRIGHT + f"SEMUA AKUN TELAH DIPROSES")
-    for _ in range(1800):
-        minutes, seconds = divmod(1800 - _, 60)
+    for _ in range(900):
+        minutes, seconds = divmod(900 - _, 60)
         countdown_text = f"Recovering Energy {minutes} menit {seconds} detik"
         print(f"{countdown_text}", end="\r", flush=True)
         time.sleep(1)
@@ -251,11 +265,11 @@ def process_accounts(user_choice, skip_tutorial):
 def main():
     print_welcome_message()
     
-    user_choice = input("Auto Upgrade? (y/n): ").strip().lower()
+    user_choice = input(Fore.BLUE +  "Auto Upgrade? (y/n): ").strip().lower()
     if user_choice != 'y':
         user_choice = 'n'
     
-    skip_tutorial = input("Skip Tutorial? (y/n): ").strip().lower()
+    skip_tutorial = input(Fore.RED +  "Skip Tutorial? (y/n): ").strip().lower()
     if skip_tutorial != 'n':
         skip_tutorial = 'y'
     
