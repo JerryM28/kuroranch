@@ -182,7 +182,7 @@ def onboarding_sequence(bearer_token):
     time.sleep(1)
     
     # Perform Mining and Feeding
-    mining_and_feeding_payload = {"mineAmount": 0, "feedAmount": 4}
+    mining_and_feeding_payload = {"mineAmount": 0, "feedAmount": 5}
     perform_action(mining_url, "Mining and Feeding", mining_and_feeding_payload, bearer_token)
     time.sleep(1)
 
@@ -222,7 +222,7 @@ def print_welcome_message():
     print(Fore.WHITE + Style.BRIGHT + "DONATE  :" + Fore.YELLOW + Style.BRIGHT + "0x6Fc6Ea113f38b7c90FF735A9e70AE24674E75D54" + Style.RESET_ALL)
 
 # Fungsi untuk memproses semua akun
-def process_accounts(user_choice, skip_tutorial):
+def process_accounts(user_choice, skip_tutorial, completed_accounts):
     bearer_tokens, warning_given = read_bearer_tokens('data.txt')
     
     if not bearer_tokens:
@@ -235,8 +235,9 @@ def process_accounts(user_choice, skip_tutorial):
         username = extract_username(bearer_token)
         print(Fore.CYAN + f"👤 Memproses Akun {i} : {username}")
         
-        if not skip_tutorial:
+        if username not in completed_accounts and not skip_tutorial:
             onboarding_sequence(bearer_token)  # Pindah onboarding_sequence ke sini
+            completed_accounts[username] = True
         
         checkin(bearer_token)
         
@@ -255,8 +256,8 @@ def process_accounts(user_choice, skip_tutorial):
         time.sleep(5)
     
     print(Fore.RED + Style.BRIGHT + f"SEMUA AKUN TELAH DIPROSES")
-    for _ in range(900):
-        minutes, seconds = divmod(900 - _, 60)
+    for _ in range(1800):
+        minutes, seconds = divmod(1800 - _, 60)
         countdown_text = f"Recovering Energy {minutes} menit {seconds} detik"
         print(f"{countdown_text}", end="\r", flush=True)
         time.sleep(1)
@@ -273,8 +274,10 @@ def main():
     if skip_tutorial != 'n':
         skip_tutorial = 'y'
     
+    completed_accounts = {}
+    
     while True:
-        process_accounts(user_choice, skip_tutorial == 'y')
+        process_accounts(user_choice, skip_tutorial == 'y', completed_accounts)
 
 if __name__ == "__main__":
     main()
