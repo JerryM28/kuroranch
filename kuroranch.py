@@ -20,6 +20,7 @@ url_update_step = "https://ranch-api.kuroro.com/api/Onboarding/UpdateStep"
 url_select_starter = "https://ranch-api.kuroro.com/api/Onboarding/SelectStarter"
 url_hatch_egg = "https://ranch-api.kuroro.com/api/Onboarding/UpdateStep"
 url_break_egg = "https://ranch-api.kuroro.com/api/Onboarding/UpdateStep"
+get_daily_streak_state_url = "https://ranch-api.kuroro.com/api/DailyStreak/GetState"
 
 # Fungsi untuk membaca token bearer dari file
 def read_bearer_tokens(file_path):
@@ -89,9 +90,28 @@ def perform_action(url, action_name, payload, bearer_token, silent=False):
 
 # Fungsi untuk menangani proses check-in
 def checkin(bearer_token):
-    current_date = datetime.now().strftime("%Y-%m-%d")
-    payload = {"date": current_date}
-    perform_action(checkin_url, f"Check-in Berhasil {current_date}", payload, bearer_token)
+    # Tambahkan permintaan GET ke URL https://ranch-api.kuroro.com/api/DailyStreak/GetState
+    headers = create_headers(bearer_token)
+    try:
+        state_response = requests.get(get_daily_streak_state_url, headers=headers)
+        if state_response.status_code == 200:
+            state_data = state_response.json()
+            if not state_data['isTodayClaimed']:
+                print(Fore.GREEN + "Successfully! You have not received the reward today.")
+                current_date = datetime.now().strftime("%Y-%m-%d")
+                payload = {"date": current_date}
+                claim_response = requests.post(checkin_url, headers=headers, json=payload)
+                if claim_response.status_code == 200:
+                    claim_data = claim_response.json()
+                    print(Fore.GREEN + f"{claim_data['message']}")
+                else:
+                    print(Fore.RED + "Reward already claimed today")
+            else:
+                print(Fore.GREEN + "Successfully! You have received the reward today.")
+        else:
+            print(Fore.RED + f"❌ Gagal mendapatkan daily streak state - Kode status: {state_response.status_code}")
+    except requests.RequestException as e:
+        print(Fore.RED + f"Terjadi kesalahan selama mendapatkan daily streak state: {e}")
 
 # Fungsi untuk menangani proses upgrade
 def upgrade_process(bearer_token):
